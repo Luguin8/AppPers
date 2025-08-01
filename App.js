@@ -2,10 +2,13 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { initDatabase } from './database/database';
-import { CronometerProvider } from './context/CronometerContext'; // 1. Importamos el proveedor
+import { CronometerProvider } from './context/CronometerContext';
+import Cronometer from './components/Cronometer';
+import HomeScreen from './components/HomeScreen'; // 1. Importamos el nuevo componente de la pantalla de inicio.
 
 export default function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState('home'); // 2. Nuevo estado para manejar la pantalla actual.
 
   useEffect(() => {
     const initializeDb = async () => {
@@ -25,11 +28,23 @@ export default function App() {
     );
   }
 
+  // 3. Renderizamos la pantalla según el estado `currentScreen`.
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'home':
+        // Le pasamos la función `setCurrentScreen` para que los botones puedan cambiar la vista.
+        return <HomeScreen onNavigate={setCurrentScreen} />;
+      case 'cronometer':
+        return <Cronometer />;
+      default:
+        return <HomeScreen onNavigate={setCurrentScreen} />;
+    }
+  };
+
   return (
-    // 2. Envolvemos toda la aplicación con el proveedor del contexto.
     <CronometerProvider>
       <View style={styles.container}>
-        <Text>¡Mi App Personal!</Text>
+        {renderScreen()}
         <StatusBar style="auto" />
       </View>
     </CronometerProvider>

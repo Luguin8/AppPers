@@ -1,32 +1,45 @@
 import React, { createContext, useContext, useState } from 'react';
 
-// 1. Crear el Contexto: Es el "contenedor" para el estado global que queremos compartir.
+// 1. Crear el Contexto: El contenedor del estado global.
 const CronometerContext = createContext();
 
-// 2. Crear un Hook personalizado: Nos permite usar el contexto de forma más simple.
+// 2. Crear un Hook personalizado para facilitar el uso.
 export const useCronometer = () => {
     return useContext(CronometerContext);
 };
 
-// 3. Crear el Proveedor del Contexto: Este componente envolverá a toda la app y
-// proporcionará el estado y las funciones a todos sus hijos.
+// 3. Crear el Proveedor del Contexto.
 export const CronometerProvider = ({ children }) => {
-    // 4. Definir el estado que queremos compartir.
-    const [isRunning, setIsRunning] = useState(false); // Estado para saber si el cronómetro está activo.
-    const [time, setTime] = useState(0);             // Estado para guardar el tiempo en segundos.
-    const [history, setHistory] = useState([]);       // Estado para guardar el historial de registros.
+    const [initialTime, setInitialTime] = useState(1440);
+    const [remainingTime, setRemainingTime] = useState(1440);
+    const [mode, setMode] = useState('countdown');
+    const [isRunning, setIsRunning] = useState(false);
+    const [hasAlerted, setHasAlerted] = useState(false);
+    const [history, setHistory] = useState([]);
+    // Nuevos estados para los mensajes visuales.
+    const [showFullAlert, setShowFullAlert] = useState(false);
+    const [showHotAlert, setShowHotAlert] = useState(false);
 
-    // 5. Crear el objeto de valor: Contiene todas las variables y funciones a compartir.
     const value = {
         isRunning,
         setIsRunning,
-        time,
-        setTime,
+        remainingTime,
+        setRemainingTime,
         history,
         setHistory,
+        mode,
+        setMode,
+        hasAlerted,
+        setHasAlerted,
+        initialTime,
+        setInitialTime,
+        // Añadimos los nuevos estados al objeto de valor.
+        showFullAlert,
+        setShowFullAlert,
+        showHotAlert,
+        setShowHotAlert,
     };
 
-    // 6. Retornar el Proveedor: Envuelve a los componentes hijos para darles acceso al `value`.
     return (
         <CronometerContext.Provider value={value}>
             {children}
