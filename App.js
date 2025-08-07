@@ -3,19 +3,23 @@ import { StyleSheet, View, ActivityIndicator, Text, Modal, TouchableOpacity } fr
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 
 // Importa los componentes y el contexto
 import HomeScreen from './components/HomeScreen';
 import Cronometer from './components/Cronometer';
 import GymLocationScreen from './components/GymLocationScreen';
-import GymSettingsScreen from './components/GymSettingsScreen'; // ¡Importa la nueva pantalla de configuración!
-
-import { getGymLocation, initDatabase } from './database/database';
+import GymSettingsScreen from './components/GymSettingsScreen';
+import PriceTrackerHomeScreen from './components/price_tracker/PriceTrackerHomeScreen';
+import NewShoppingListScreen from './components/price_tracker/NewShoppingListScreen';
+import ViewShoppingListScreen from './components/price_tracker/ViewShoppingListScreen';
+import LoadProductScreen from './components/price_tracker/LoadProductScreen';
+import AllProductsScreen from './components/price_tracker/AllProductsScreen';
+import { ShoppingListProvider } from './database/ShoppingListContext';
+import { getGymLocation, getDb } from './database/database'; // Importa getDb en lugar de initDatabase
 import { CronometerProvider } from './context/CronometerContext';
 
 // Importa la tarea de geolocalización desde su archivo separado
-import { LOCATION_TRACKING_TASK } from './tasks/GymLocationTask'; 
+import { LOCATION_TRACKING_TASK } from './tasks/GymLocationTask';
 
 const Stack = createStackNavigator();
 
@@ -61,50 +65,55 @@ export default function App() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Inicialización de la base de datos
-      await initDatabase();
-      setDbInitialized(true);
-
-      // Solicitar permiso de ubicación en primer plano
-      let { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-      if (foregroundStatus !== 'granted') {
-        showAlert('Permiso de Ubicación Denegado', 'Se requiere permiso para acceder a la ubicación en primer plano.');
-        return;
-      }
-
-      // Solicitar permiso de ubicación en segundo plano
-      let { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-      if (backgroundStatus !== 'granted') {
-        showAlert('Permiso de Ubicación en Segundo Plano Denegado', 'Se requiere permiso de ubicación "Permitir todo el tiempo" para el rastreo en segundo plano.');
-      }
-
-      // Configurar la ubicación en segundo plano si hay un gimnasio guardado
-      const gymLocation = await getGymLocation();
-      if (gymLocation) {
-        const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TRACKING_TASK);
-        if (!hasStarted) {
-          try {
-            await Location.startLocationUpdatesAsync(LOCATION_TRACKING_TASK, {
-              accuracy: Location.Accuracy.Balanced, 
-              timeInterval: 3600000, // Actualizar cada 1 hora (3600000 ms)
-              distanceInterval: 100,
-              foregroundService: {
-                notificationTitle: 'Rastreador de Gimnasio',
-                notificationBody: 'Tu ubicación está siendo rastreada para registrar visitas al gimnasio.',
-                notificationColor: '#2196F3',
-              },
-            });
-            console.log('Seguimiento de ubicación en segundo plano iniciado desde App.js (cada hora)');
-          } catch (error) {
-            console.error('Error al iniciar el seguimiento de ubicación desde App.js:', error);
-            showAlert('Error', 'No se pudo iniciar el seguimiento de ubicación en segundo plano.');
-          }
-        } else {
-          console.log('El seguimiento de ubicación ya estaba activo.');
+      try {
+        await getDb(); // Espera a que la base de datos se inicialice y esté lista.
+        
+        let { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+        if (foregroundStatus !== 'granted') {
+          showAlert('Permiso de Ubicación Denegado', 'Se requiere permiso para acceder a la ubicación en primer plano.');
+          setDbInitialized(true);
+          return;
         }
+        
+        let { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+        if (backgroundStatus !== 'granted') {
+          showAlert('Permiso de Ubicación en Segundo Plano Denegado', 'Se requiere permiso de ubicación "Permitir todo el tiempo" para el rastreo en segundo plano.');
+        }
+        
+        const gymLocation = await getGymLocation();
+        if (gymLocation) {
+          // TaskManager.isTaskDefined() devuelve true si la tarea ya está registrada.
+          const hasTask = await TaskManager.isTaskDefined(LOCATION_TRACKING_TASK);
+          const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TRACKING_TASK);
+
+          if (hasTask && !hasStarted) {
+            try {
+              await Location.startLocationUpdatesAsync(LOCATION_TRACKING_TASK, {
+                accuracy: Location.Accuracy.Balanced,
+                timeInterval: 3600000,
+                distanceInterval: 100,
+                foregroundService: {
+                  notificationTitle: 'Rastreador de Gimnasio',
+                  notificationBody: 'Tu ubicación está siendo rastreada para registrar visitas al gimnasio.',
+                  notificationColor: '#2196F3',
+                },
+              });
+              console.log('Seguimiento de ubicación en segundo plano iniciado desde App.js (cada hora)');
+            } catch (error) {
+              console.error('Error al iniciar el seguimiento de ubicación desde App.js:', error);
+              showAlert('Error', 'No se pudo iniciar el seguimiento de ubicación en segundo plano.');
+            }
+          } else if (hasStarted) {
+            console.log('El seguimiento de ubicación ya estaba activo.');
+          }
+        }
+        setDbInitialized(true);
+      } catch (error) {
+        console.error("Error al inicializar la aplicación:", error);
+        showAlert("Error Fatal", "La aplicación no pudo cargarse correctamente. Por favor, reiníciela.");
+        setDbInitialized(true); // Permite que la app se renderice para mostrar la alerta
       }
     };
-
     initializeApp();
   }, []);
 
@@ -119,30 +128,57 @@ export default function App() {
 
   return (
     <CronometerProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen} 
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="Cronometer" 
-            component={Cronometer} 
-            options={{ title: 'Cronómetro' }} 
-          />
-          <Stack.Screen
-            name="GymLocation" 
-            component={GymLocationScreen} 
-            options={{ headerShown: false }} // Oculta el header para usar el custom header
-          />
-          <Stack.Screen
-            name="GymSettings" // Nueva ruta para la pantalla de configuración
-            component={GymSettingsScreen} 
-            options={{ title: 'Configuración del Gimnasio' }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <ShoppingListProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Home">
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Cronometer"
+              component={Cronometer}
+              options={{ title: 'Cronómetro' }}
+            />
+            <Stack.Screen
+              name="GymLocation"
+              component={GymLocationScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="GymSettings"
+              component={GymSettingsScreen}
+              options={{ title: 'Configuración del Gimnasio' }}
+            />
+            <Stack.Screen
+              name="PriceTrackerHome"
+              component={PriceTrackerHomeScreen}
+              options={{ title: 'Anotador de Precios' }}
+            />
+            <Stack.Screen
+              name="NewShoppingList"
+              component={NewShoppingListScreen}
+              options={{ title: 'Crear Lista de Compras' }}
+            />
+            <Stack.Screen
+              name="ViewShoppingList"
+              component={ViewShoppingListScreen}
+              options={{ title: 'Ver Lista de Compras' }}
+            />
+            <Stack.Screen
+              name="LoadProduct"
+              component={LoadProductScreen}
+              options={{ title: 'Cargar Producto' }}
+            />
+            <Stack.Screen
+              name="AllProducts"
+              component={AllProductsScreen}
+              options={{ title: 'Todos los Productos' }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ShoppingListProvider>
       <CustomAlertDialog
         visible={alertVisible}
         title={alertTitle}

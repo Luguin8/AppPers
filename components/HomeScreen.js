@@ -23,7 +23,7 @@ export default function HomeScreen() {
         { title: 'Cronómetro', color: '#00BFFF', onPress: () => navigation.navigate('Cronometer') },
         // ¡CAMBIO AQUÍ! Ahora navega directamente a 'GymLocation'
         { title: 'Seguimiento Gym', color: '#FF0000', onPress: () => navigation.navigate('GymLocation') }, 
-        { title: 'Anotador de Precios', color: '#0000FF', onPress: () => console.log('Navegar a Anotador de Precios') },
+        { title: 'Anotador de Precios', color: '#0000FF', onPress: () => navigation.navigate('PriceTrackerHome') }, 
         { title: 'Registro de Moto', color: '#A9A9A9', onPress: () => console.log('Navegar a Registro de Moto') },
         { title: 'Comprobantes', color: '#32CD32', onPress: () => console.log('Navegar a Comprobantes') },
         { title: 'Recordatorios', color: '#800080', onPress: () => console.log('Navegar a Recordatorios') },
