@@ -38,6 +38,9 @@
     "extra": {
       "eas": {
         "projectId": "c174bda2-51ae-42c5-a3d5-f3327ee6c90c"
+      },
+      "weatherApi": {
+        "apiKey": "fe45901a136c4857d09925d78042847f"
       }
     }
   },
