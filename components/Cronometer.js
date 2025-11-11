@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Audio } from 'expo-av';
 import { useCronometer } from '../context/CronometerContext';
 
@@ -37,6 +37,8 @@ export default function Cronometer() {
     setShowFullAlert,
     showHotAlert,
     setShowHotAlert,
+    isLoading,
+    currentTemp,
   } = useCronometer();
   
   const intervalRef = useRef(null);
@@ -83,7 +85,8 @@ export default function Cronometer() {
           if (mode === 'countdown') {
             const elapsedTime = initialTime - prevTime;
             
-            if (elapsedTime >= 310 && !hasAlerted) {
+            const fullTimeMark = 310;
+            if (elapsedTime >= fullTimeMark && !hasAlerted) {
               setShowFullAlert(true);
               playSound();
               setHasAlerted(true);
@@ -206,6 +209,15 @@ export default function Cronometer() {
   const progressBarColor = calculateColor();
   const containerColor = flashColor;
 
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text style={styles.loadingText}>Obteniendo clima...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.outerContainer, {backgroundColor: containerColor}]}>
       <Text style={styles.title}>Cronómetro del Calefón</Text>
@@ -231,6 +243,11 @@ export default function Cronometer() {
               <Text style={styles.alertText}>¡El agua está caliente!</Text>
           </View>
       )}
+
+      <Text style={styles.weaterText}>
+        {currentTemp ? 'Temp: ${currentTemp.toFixed(1)}°C' : 'Temp: N/A'},
+        Tiempo: {formatTime(remainingTime)}
+      </Text>
 
       <Text style={styles.timerText}>{formatTime(remainingTime)}</Text>
       
@@ -269,6 +286,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 18,
+    color: '#333',
   },
   title: {
     fontSize: 24,
@@ -323,6 +351,11 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     width: '100%',
+  },
+  weaterText: {
+    fontSize: 18,
+    color: '#555',
+    marginBottom: 5,
   },
   timerText: {
     fontSize: 72,

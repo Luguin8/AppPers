@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, use } from 'react';
+import * as Location from 'expo-location';
+import Constans from 'expo-constants';
+import {Alert} from 'react-native';
 
 // 1. Crear el Contexto: El contenedor del estado global.
 const CronometerContext = createContext();
@@ -19,6 +22,64 @@ export const CronometerProvider = ({ children }) => {
     // Nuevos estados para los mensajes visuales.
     const [showFullAlert, setShowFullAlert] = useState(false);
     const [showHotAlert, setShowHotAlert] = useState(false);
+    // Nuevos estados para el clima
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentTemp, setCurrentTemp] = useState(null);
+
+    // Logica para obtener el clima y setear tiempo
+    useEffect(() => {
+        const fetchWeatherAndTime = async () => {
+            setIsLoading(true);
+            let location = null;
+            let apiKey = Constans.expoConfig.extra.weatherApi.apiKey;
+            try {
+                //1. pedir ubicacion
+                let { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert('Permiso denegado');
+                    // Sin permiso uso el tiempo default
+                    setInitialTime(1440);
+                    setRemainingTime(1440);
+                    setCurrentTemp(null);
+                    setIsLoading(false);
+                    return;
+                }
+                //2. obtener ubicacion
+                location = await Location.getCurrentPositionAsync({});
+                const {latitude, longitude} = location.coords;
+                //3. obtener clima
+                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`);
+                if (!response.ok) {
+                    throw new Error('Error al obtener el clima');
+                }
+                const data = await response.json();
+                const temp = data.main.temp;
+                setCurrentTemp(temp);
+                //4. aplicar logica de negocio
+                let newTime;
+                if (temp <= 20){
+                    newTime = 1440;
+                } else if (temp >= 21 && temp <= 27) {
+                    newTime = 1200;
+                } else {
+                    newTime = 1000;
+                }
+
+                //5. actualizar estado
+                setInitialTime(newTime);
+                setRemainingTime(newTime);
+            } catch (error) {
+                console.error('Error al obtener el clima:', error);
+                Alert.alert('Error al obtener el clima');
+                setInitialTime(1440);
+                setRemainingTime(1440);
+                setCurrentTemp(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchWeatherAndTime();
+    }, []);
 
     const value = {
         isRunning,
@@ -38,6 +99,9 @@ export const CronometerProvider = ({ children }) => {
         setShowFullAlert,
         showHotAlert,
         setShowHotAlert,
+        // nuevos
+        isLoading,
+        currentTemp,
     };
 
     return (
