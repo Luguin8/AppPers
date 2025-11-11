@@ -1,6 +1,6 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
-import { getGymLocation, getDatabase, recordHourlyPresence, getHourlyPresence, updateCurrentRoutineIndex } from '../database/database';
+import { getGymLocation, getDb, recordHourlyPresence, getHourlyPresence, updateCurrentRoutineIndex } from '../database/database';
 
 // Nombre único para tu tarea de seguimiento de ubicación
 export const LOCATION_TRACKING_TASK = 'location-tracking-task';
@@ -18,7 +18,7 @@ TaskManager.defineTask(LOCATION_TRACKING_TASK, async ({ data, error }) => {
     const { locations } = data;
     const currentLocation = locations[0].coords; // Obtén la ubicación más reciente
 
-    const db = getDatabase();
+    const db = await getDb();
     if (!db) {
       console.warn('Base de datos no inicializada en la tarea en segundo plano. Asegúrate de llamar a initDatabase en App.js.');
       return;
