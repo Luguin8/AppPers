@@ -51,7 +51,7 @@ export default function Cronometer() {
     const loadSound = async () => {
         try {
             const { sound } = await Audio.Sound.createAsync(
-                { uri: 'https://mixkit.co/free-sound-effects/download/2357/?utm_source=mixkit&utm_medium=referral&utm_campaign=mixkit.co' }
+               require('../assets/sounds/alert.wav')
             );
             soundRef.current = sound;
         } catch (error) {
