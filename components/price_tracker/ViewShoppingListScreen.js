@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { getCheapestPriceForProductWithBrand, getProductByNameAndBrand, addPriceEntry, addSupermarket, getSupermarketByName } from '../../database/database';
 
 export default function ViewShoppingList() {
-    const { shoppingList, clearShoppingList, removeProductFromList } = useShoppingList();
+    const { shoppingList, clearList, removeProductFromList } = useShoppingList();
     const [prices, setPrices] = useState({});
     const [loading, setLoading] = useState(false);
 
@@ -186,7 +186,7 @@ export default function ViewShoppingList() {
                 />
             )}
             {shoppingList.length > 0 && (
-                <TouchableOpacity onPress={() => clearShoppingList()} style={styles.clearButton}>
+                <TouchableOpacity onPress={() => clearList()} style={styles.clearButton}>
                     <Ionicons name="trash" size={20} color="white" />
                     <Text style={styles.clearButtonText}>Limpiar Lista</Text>
                 </TouchableOpacity>
