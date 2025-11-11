@@ -245,8 +245,8 @@ export default function Cronometer() {
       )}
 
       <Text style={styles.weaterText}>
-        {currentTemp ? 'Temp: ${currentTemp.toFixed(1)}°C' : 'Temp: N/A'},
-        Tiempo: {formatTime(remainingTime)}
+        {currentTemp ? `Temp: ${currentTemp.toFixed(1)}°C` : 'Temp: N/A'},
+        Tiempo: {formatTime(initialTime)}
       </Text>
 
       <Text style={styles.timerText}>{formatTime(remainingTime)}</Text>
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   progressBar: {
     width: '100%',
   },
-  weaterText: {
+  weatherText: {
     fontSize: 18,
     color: '#555',
     marginBottom: 5,

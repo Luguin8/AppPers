@@ -31,7 +31,7 @@ TaskManager.defineTask(LOCATION_TRACKING_TASK, async ({ data, error }) => {
         return;
       }
 
-      const distance = Location.getDistanceAsync(
+      const distance = await Location.getDistanceAsync(
         { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
         { latitude: gymLocationConfig.latitude, longitude: gymLocationConfig.longitude }
       );

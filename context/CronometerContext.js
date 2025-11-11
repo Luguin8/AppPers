@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, use } from 'react';
 import * as Location from 'expo-location';
-import Constans from 'expo-constants';
+import Constants from 'expo-constants';
 import {Alert} from 'react-native';
 
 // 1. Crear el Contexto: El contenedor del estado global.
@@ -31,7 +31,7 @@ export const CronometerProvider = ({ children }) => {
         const fetchWeatherAndTime = async () => {
             setIsLoading(true);
             let location = null;
-            let apiKey = Constans.expoConfig.extra.weatherApi.apiKey;
+            let apiKey = Constants.expoConfig.extra.weatherApi.apiKey;
             try {
                 //1. pedir ubicacion
                 let { status } = await Location.requestForegroundPermissionsAsync();
